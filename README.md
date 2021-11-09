@@ -1,10 +1,10 @@
 # etcd-php
 PHP client for Etcd v3.5
 
-[![Build Status](https://travis-ci.org/ouqiang/etcd-php.png)](https://travis-ci.org/ouqiang/etcd-php)
-[![Latest Stable Version](https://poser.pugx.org/start-point/etcd-php/v/stable.png)](https://packagist.org/packages/start-point/etcd-php)
-[![Total Downloads](https://poser.pugx.org/start-point/etcd-php/downloads.png)](https://packagist.org/packages/ouqiang/etcd-php)
-[![License](https://poser.pugx.org/start-point/etcd-php/license.png)](https://packagist.org/packages/start-point/etcd-php)
+[![Build Status](https://travis-ci.org/ouqiang/etcd-php.png)](https://github.com/liangtao-top/etcd-php)
+[![Latest Stable Version](https://poser.pugx.org/start-point/etcd-php/v/stable.png)](https://packagist.org/packages/liangtao/etcd-php)
+[![Total Downloads](https://poser.pugx.org/start-point/etcd-php/downloads.png)](https://packagist.org/packages//liangtao/etcd-php)
+[![License](https://poser.pugx.org/start-point/etcd-php/license.png)](https://packagist.org/packages/liangtao/etcd-php)
 
 
 [documentation](https://github.com/liangtao-top/etcd-php/wiki)

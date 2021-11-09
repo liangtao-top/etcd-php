@@ -1,14 +1,14 @@
 {
   "name": "liangtao/etcd-php",
   "type": "library",
-  "description": "PHP client for Etcd v3",
+  "description": "PHP client for Etcd v3.5",
   "keywords": [
     "etcdv3",
     "etcd",
     "etcd-client",
     "etcd-php"
   ],
-  "homepage": "https://github.com/liangtao-top/v2dmim-core",
+  "homepage": "https://github.com/liangtao-top/etcd-php",
   "license": "MIT",
   "authors": [
     {

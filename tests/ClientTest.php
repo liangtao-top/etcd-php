@@ -20,15 +20,15 @@ class ClientTest extends TestCase
     /**
      * @var \Etcd\Client;
      */
-    protected $client;
+    protected Client $client;
 
-    protected $key = '/test';
+    protected string $key = '/test';
 
-    protected $role = 'root';
-    protected $user = 'root';
-    protected $password = '123456';
+    protected string $role = 'root';
+    protected string $user = 'root';
+    protected string $password = '123456';
 
-    protected function setUp():void
+    protected function setUp(): void
     {
         $this->client = new Client();
         $this->client->setPretty(true);
@@ -38,7 +38,6 @@ class ClientTest extends TestCase
     {
         $value = 'testput';
         $this->client->put($this->key, $value);
-
         $body = $this->client->get($this->key);
         $this->assertArrayHasKey($this->key, $body);
         $this->assertEquals($value, $body[$this->key]);
@@ -47,12 +46,14 @@ class ClientTest extends TestCase
     public function testGetAllKeys()
     {
         $body = $this->client->getAllKeys();
+        print_r($body);
         $this->assertNotEmpty($body);
     }
 
     public function testGetKeysWithPrefix()
     {
         $body = $this->client->getKeysWithPrefix('/');
+        print_r($body);
         $this->assertNotEmpty($body);
     }
 
@@ -67,7 +68,7 @@ class ClientTest extends TestCase
     {
         $body = $this->client->grant(3600);
         $this->assertArrayHasKey('ID', $body);
-        $id = (int) $body['ID'];
+        $id = (int)$body['ID'];
 
         $body = $this->client->timeToLive($id);
         $this->assertArrayHasKey('ID', $body);
@@ -128,7 +129,7 @@ class ClientTest extends TestCase
     public function testGrantRolePermission()
     {
         $this->client->grantRolePermission($this->role,
-            Client::PERMISSION_READWRITE, '\0', 'z' );
+                                           Client::PERMISSION_READWRITE, '\0', 'z');
     }
 
     public function testAuthenticate()

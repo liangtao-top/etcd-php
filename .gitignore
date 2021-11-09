@@ -10,3 +10,5 @@ vendor
 index.php
 package.json
 node_modules
+
+.phpunit.result.cache

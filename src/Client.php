@@ -8,55 +8,54 @@
 // +----------------------------------------------------------------------
 // | Author: TaoGe <liangtao.gz@foxmail.com>
 // +----------------------------------------------------------------------
-// | Date: 2021/11/9 14:10
+// | Date: 2021/11/9 14:29
 // +----------------------------------------------------------------------
 
 namespace Etcd;
 
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\BadResponseException;
 
 class Client
 {
     // KV
-    const URI_PUT = 'kv/put';
-    const URI_RANGE = 'kv/range';
+    const URI_PUT          = 'kv/put';
+    const URI_RANGE        = 'kv/range';
     const URI_DELETE_RANGE = 'kv/deleterange';
-    const URI_TXN = 'kv/txn';
-    const URI_COMPACTION = 'kv/compaction';
+    const URI_TXN          = 'kv/txn';
+    const URI_COMPACTION   = 'kv/compaction';
 
     // Lease
-    const URI_GRANT = 'lease/grant';
-    const URI_REVOKE = 'kv/lease/revoke';
-    const URI_KEEPALIVE = 'lease/keepalive';
+    const URI_GRANT      = 'lease/grant';
+    const URI_REVOKE     = 'kv/lease/revoke';
+    const URI_KEEPALIVE  = 'lease/keepalive';
     const URI_TIMETOLIVE = 'kv/lease/timetolive';
 
     // Role
-    const URI_AUTH_ROLE_ADD = 'auth/role/add';
-    const URI_AUTH_ROLE_GET = 'auth/role/get';
+    const URI_AUTH_ROLE_ADD    = 'auth/role/add';
+    const URI_AUTH_ROLE_GET    = 'auth/role/get';
     const URI_AUTH_ROLE_DELETE = 'auth/role/delete';
-    const URI_AUTH_ROLE_LIST = 'auth/role/list';
+    const URI_AUTH_ROLE_LIST   = 'auth/role/list';
 
     // Authenticate
-    const URI_AUTH_ENABLE = 'auth/enable';
-    const URI_AUTH_DISABLE = 'auth/disable';
+    const URI_AUTH_ENABLE       = 'auth/enable';
+    const URI_AUTH_DISABLE      = 'auth/disable';
     const URI_AUTH_AUTHENTICATE = 'auth/authenticate';
 
     // User
-    const URI_AUTH_USER_ADD = 'auth/user/add';
-    const URI_AUTH_USER_GET = 'auth/user/get';
-    const URI_AUTH_USER_DELETE = 'auth/user/delete';
+    const URI_AUTH_USER_ADD             = 'auth/user/add';
+    const URI_AUTH_USER_GET             = 'auth/user/get';
+    const URI_AUTH_USER_DELETE          = 'auth/user/delete';
     const URI_AUTH_USER_CHANGE_PASSWORD = 'auth/user/changepw';
-    const URI_AUTH_USER_LIST = 'auth/user/list';
+    const URI_AUTH_USER_LIST            = 'auth/user/list';
 
-    const URI_AUTH_ROLE_GRANT = 'auth/role/grant';
+    const URI_AUTH_ROLE_GRANT  = 'auth/role/grant';
     const URI_AUTH_ROLE_REVOKE = 'auth/role/revoke';
 
-    const URI_AUTH_USER_GRANT = 'auth/user/grant';
+    const URI_AUTH_USER_GRANT  = 'auth/user/grant';
     const URI_AUTH_USER_REVOKE = 'auth/user/revoke';
 
-    const PERMISSION_READ = 0;
-    const PERMISSION_WRITE = 1;
+    const PERMISSION_READ      = 0;
+    const PERMISSION_WRITE     = 1;
     const PERMISSION_READWRITE = 2;
 
     const DEFAULT_HTTP_TIMEOUT = 30;
@@ -64,31 +63,32 @@ class Client
     /**
      * @var string host:port
      */
-    protected $server;
+    protected string $server;
     /**
      * @var string api version
      */
-    protected $version;
+    protected string $version;
 
     /**
      * @var array
      */
-    protected $httpOptions;
+    protected array $httpOptions;
 
     /**
      * @var bool
      */
-    protected $pretty = false;
+    protected bool $pretty = false;
 
     /**
      * @var string|null auth token
      */
-    protected $token = null;
+    protected ?string $token = null;
 
-    public function __construct($server = '127.0.0.1:2379', $version = 'v3alpha')
+    public function __construct($server = '127.0.0.1:2379', $version = 'v3')
     {
         $this->server = rtrim($server, "/");
-        if (strpos($this->server, 'http') !== 0) {
+        if (!str_starts_with($this->server, 'http')) {
+            /** @noinspection HttpUrlsUsage */
             $this->server = 'http://' . $this->server;
         }
         $this->version = trim($version);
@@ -120,28 +120,27 @@ class Client
      * Put puts the given key into the key-value store.
      * A put request increments the revision of the key-value
      * store\nand generates one event in the event history.
-     *
      * @param string $key
      * @param string $value
      * @param array  $options 可选参数
-     *        int64  lease
-     *        bool   prev_kv
-     *        bool   ignore_value
-     *        bool   ignore_lease
+     *                        int64  lease
+     *                        bool   prev_kv
+     *                        bool   ignore_value
+     *                        bool   ignore_lease
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function put($key, $value, array $options = [])
+    public function put(string $key, string $value, array $options = []): array
     {
         $params = [
-            'key' => $key,
+            'key'   => $key,
             'value' => $value,
         ];
 
-        $params = $this->encode($params);
+        $params  = $this->encode($params);
         $options = $this->encode($options);
-        $body = $this->request(self::URI_PUT, $params, $options);
-        $body = $this->decodeBodyForFields(
+        $body    = $this->request(self::URI_PUT, $params, $options);
+        $body    = $this->decodeBodyForFields(
             $body,
             'prev_kv',
             ['key', 'value',]
@@ -156,9 +155,8 @@ class Client
 
     /**
      * Gets the key or a range of keys
-     *
-     * @param  string $key
-     * @param  array $options
+     * @param string $key
+     * @param array  $options
      *         string range_end
      *         int    limit
      *         int    revision
@@ -172,17 +170,17 @@ class Client
      *         int64  min_create_revision
      *         int64  max_create_revision
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function get($key, array $options = [])
+    public function get(string $key, array $options = []): array
     {
-        $params = [
+        $params  = [
             'key' => $key,
         ];
-        $params = $this->encode($params);
+        $params  = $this->encode($params);
         $options = $this->encode($options);
-        $body = $this->request(self::URI_RANGE, $params, $options);
-        $body = $this->decodeBodyForFields(
+        $body    = $this->request(self::URI_RANGE, $params, $options);
+        $body    = $this->decodeBodyForFields(
             $body,
             'kvs',
             ['key', 'value',]
@@ -197,32 +195,30 @@ class Client
 
     /**
      * get all keys
-     *
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getAllKeys()
+    public function getAllKeys(): array
     {
         return $this->get("\0", ['range_end' => "\0"]);
     }
 
     /**
      * get all keys with prefix
-     *
-     * @param  string $prefix
+     * @param string $prefix
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getKeysWithPrefix($prefix)
+    public function getKeysWithPrefix(string $prefix): array
     {
         $prefix = trim($prefix);
         if (!$prefix) {
             return [];
         }
-        $lastIndex = strlen($prefix) - 1;
-        $lastChar = $prefix[$lastIndex];
-        $nextAsciiCode = ord($lastChar) + 1;
-        $rangeEnd = $prefix;
+        $lastIndex            = strlen($prefix) - 1;
+        $lastChar             = $prefix[$lastIndex];
+        $nextAsciiCode        = ord($lastChar) + 1;
+        $rangeEnd             = $prefix;
         $rangeEnd[$lastIndex] = chr($nextAsciiCode);
 
         return $this->get($prefix, ['range_end' => $rangeEnd]);
@@ -230,23 +226,22 @@ class Client
 
     /**
      * Removes the specified key or range of keys
-     *
      * @param string $key
      * @param array  $options
      *        string range_end
      *        bool   prev_kv
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function del($key, array $options = [])
+    public function del(string $key, array $options = []): array
     {
-        $params = [
+        $params  = [
             'key' => $key,
         ];
-        $params = $this->encode($params);
+        $params  = $this->encode($params);
         $options = $this->encode($options);
-        $body = $this->request(self::URI_DELETE_RANGE, $params, $options);
-        $body = $this->decodeBodyForFields(
+        $body    = $this->request(self::URI_DELETE_RANGE, $params, $options);
+        $body    = $this->decodeBodyForFields(
             $body,
             'prev_kvs',
             ['key', 'value',]
@@ -263,24 +258,19 @@ class Client
      * Compact compacts the event history in the etcd key-value store.
      * The key-value\nstore should be periodically compacted
      * or the event history will continue to grow\nindefinitely.
-     *
-     * @param int $revision
-     *
+     * @param int        $revision
      * @param bool|false $physical
-     *
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function compaction($revision, $physical = false)
+    public function compaction(int $revision, bool $physical = false): array
     {
         $params = [
             'revision' => $revision,
             'physical' => $physical,
         ];
 
-        $body = $this->request(self::URI_COMPACTION, $params);
-
-        return $body;
+        return $this->request(self::URI_COMPACTION, $params);
     }
 
     // endregion kv
@@ -292,55 +282,47 @@ class Client
      * keepAlive\nwithin a given time to live period. All keys attached to the lease
      * will be expired and\ndeleted if the lease expires.
      * Each expired key generates a delete event in the event history.",
-     *
-     * @param int $ttl  TTL is the advisory time-to-live in seconds.
-     * @param int $id   ID is the requested ID for the lease.
+     * @param int $ttl    TTL is the advisory time-to-live in seconds.
+     * @param int $id     ID is the requested ID for the lease.
      *                    If ID is set to 0, the lessor chooses an ID.
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function grant($ttl, $id = 0)
+    public function grant(int $ttl, int $id = 0): array
     {
         $params = [
             'TTL' => $ttl,
-            'ID' => $id,
+            'ID'  => $id,
         ];
 
-
-        $body = $this->request(self::URI_GRANT, $params);
-
-        return $body;
+        return $this->request(self::URI_GRANT, $params);
     }
 
     /**
      * revokes a lease. All keys attached to the lease will expire and be deleted.
-     *
-     * @param int  $id ID is the lease ID to revoke. When the ID is revoked,
-     *               all associated keys will be deleted.
+     * @param int $id ID is the lease ID to revoke. When the ID is revoked,
+     *                all associated keys will be deleted.
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function revoke($id)
+    public function revoke(int $id): array
     {
         $params = [
             'ID' => $id,
         ];
 
-        $body = $this->request(self::URI_REVOKE, $params);
-
-        return $body;
+        return $this->request(self::URI_REVOKE, $params);
     }
 
     /**
      * keeps the lease alive by streaming keep alive requests
      * from the client\nto the server and streaming keep alive responses
      * from the server to the client.
-     *
-     * @param int $id  ID is the lease ID for the lease to keep alive.
+     * @param int $id ID is the lease ID for the lease to keep alive.
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function keepAlive($id)
+    public function keepAlive(int $id): array
     {
         $params = [
             'ID' => $id,
@@ -353,30 +335,29 @@ class Client
         }
         // response "result" field, etcd bug?
         return [
-            'ID' => $body['result']['ID'],
+            'ID'  => $body['result']['ID'],
             'TTL' => $body['result']['TTL'],
         ];
     }
 
     /**
      * retrieves lease information.
-     *
-     * @param int $id ID is the lease ID for the lease.
+     * @param int        $id ID is the lease ID for the lease.
      * @param bool|false $keys
      * @return array
-     * @throws BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function timeToLive($id, $keys = false)
+    public function timeToLive(int $id, bool $keys = false): array
     {
         $params = [
-            'ID' => $id,
+            'ID'   => $id,
             'keys' => $keys,
         ];
 
         $body = $this->request(self::URI_TIMETOLIVE, $params);
 
         if (isset($body['keys'])) {
-            $body['keys'] = array_map(function($value) {
+            $body['keys'] = array_map(function ($value) {
                 return base64_decode($value);
             }, $body['keys']);
         }
@@ -390,11 +371,10 @@ class Client
 
     /**
      * enable authentication
-     *
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function authEnable()
+    public function authEnable(): array
     {
         $body = $this->request(self::URI_AUTH_ENABLE);
         $this->clearToken();
@@ -404,11 +384,10 @@ class Client
 
     /**
      * disable authentication
-     *
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function authDisable()
+    public function authDisable(): array
     {
         $body = $this->request(self::URI_AUTH_DISABLE);
         $this->clearToken();
@@ -417,15 +396,15 @@ class Client
     }
 
     /**
-     * @param  string $user
-     * @param  string $password
+     * @param string $user
+     * @param string $password
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function authenticate($user, $password)
+    public function authenticate(string $user, string $password): array
     {
         $params = [
-            'name' => $user,
+            'name'     => $user,
             'password' => $password,
         ];
 
@@ -439,30 +418,26 @@ class Client
 
     /**
      * add a new role.
-     *
      * @param string $name
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function addRole($name)
+    public function addRole(string $name): array
     {
         $params = [
             'name' => $name,
         ];
 
-        $body = $this->request(self::URI_AUTH_ROLE_ADD, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_ROLE_ADD, $params);
     }
 
     /**
      * get detailed role information.
-     *
-     * @param  string $role
+     * @param string $role
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getRole($role)
+    public function getRole(string $role): array
     {
         $params = [
             'role' => $role,
@@ -483,29 +458,25 @@ class Client
 
     /**
      * delete a specified role.
-     *
-     * @param  string $role
+     * @param string $role
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function deleteRole($role)
+    public function deleteRole(string $role): array
     {
         $params = [
             'role' => $role,
         ];
 
-        $body = $this->request(self::URI_AUTH_ROLE_DELETE, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_ROLE_DELETE, $params);
     }
 
     /**
      * get lists of all roles
-     *
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function roleList()
+    public function roleList(): array
     {
         $body = $this->request(self::URI_AUTH_ROLE_LIST);
 
@@ -518,32 +489,28 @@ class Client
 
     /**
      * add a new user
-     *
      * @param string $user
      * @param string $password
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function addUser($user, $password)
+    public function addUser(string $user, string $password): array
     {
         $params = [
-            'name' => $user,
+            'name'     => $user,
             'password' => $password,
         ];
 
-        $body = $this->request(self::URI_AUTH_USER_ADD, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_USER_ADD, $params);
     }
 
     /**
      * get detailed user information
-     *
-     * @param  string $user
+     * @param string $user
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getUser($user)
+    public function getUser(string $user): array
     {
         $params = [
             'name' => $user,
@@ -559,29 +526,25 @@ class Client
 
     /**
      * delete a specified user
-     *
      * @param string $user
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function deleteUser($user)
+    public function deleteUser(string $user): array
     {
         $params = [
             'name' => $user,
         ];
 
-        $body = $this->request(self::URI_AUTH_USER_DELETE, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_USER_DELETE, $params);
     }
 
     /**
      * get a list of all users.
-     *
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function userList()
+    public function userList(): array
     {
         $body = $this->request(self::URI_AUTH_USER_LIST);
         if ($this->pretty && isset($body['users'])) {
@@ -593,128 +556,112 @@ class Client
 
     /**
      * change the password of a specified user.
-     *
      * @param string $user
      * @param string $password
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function changeUserPassword($user, $password)
+    public function changeUserPassword(string $user, string $password): array
     {
         $params = [
-            'name' => $user,
+            'name'     => $user,
             'password' => $password,
         ];
 
-        $body = $this->request(self::URI_AUTH_USER_CHANGE_PASSWORD, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_USER_CHANGE_PASSWORD, $params);
     }
 
     /**
      * grant a permission of a specified key or range to a specified role.
-     *
      * @param string      $role
      * @param int         $permType
      * @param string      $key
      * @param string|null $rangeEnd
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function grantRolePermission($role, $permType, $key, $rangeEnd = null)
+    public function grantRolePermission(string $role, int $permType, string $key, string $rangeEnd = null): array
     {
         $params = [
             'name' => $role,
             'perm' => [
                 'permType' => $permType,
-                'key' => base64_encode($key),
+                'key'      => base64_encode($key),
             ],
         ];
         if ($rangeEnd !== null) {
             $params['perm']['range_end'] = base64_encode($rangeEnd);
         }
 
-        $body = $this->request(self::URI_AUTH_ROLE_GRANT, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_ROLE_GRANT, $params);
     }
 
     /**
      * revoke a key or range permission of a specified role.
-     *
      * @param string      $role
      * @param string      $key
      * @param string|null $rangeEnd
      * @return array
-     * @throws BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function revokeRolePermission($role, $key, $rangeEnd = null)
+    public function revokeRolePermission(string $role, string $key, string $rangeEnd = null): array
     {
         $params = [
             'role' => $role,
-            'key' => $key,
+            'key'  => $key,
         ];
         if ($rangeEnd !== null) {
             $params['range_end'] = $rangeEnd;
         }
 
-        $body = $this->request(self::URI_AUTH_ROLE_REVOKE, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_ROLE_REVOKE, $params);
     }
 
     /**
      * grant a role to a specified user.
-     *
-     * @param  string $user
-     * @param  string $role
+     * @param string $user
+     * @param string $role
      * @return array
-     * @throws BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function grantUserRole($user, $role)
+    public function grantUserRole(string $user, string $role): array
     {
         $params = [
             'user' => $user,
             'role' => $role,
         ];
 
-        $body = $this->request(self::URI_AUTH_USER_GRANT, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_USER_GRANT, $params);
     }
 
     /**
      * revoke a role of specified user.
-     *
      * @param string $user
      * @param string $role
      * @return array
-     * @throws \GuzzleHttp\Exception\BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function revokeUserRole($user, $role)
+    public function revokeUserRole(string $user, string $role): array
     {
         $params = [
             'name' => $user,
             'role' => $role,
         ];
 
-        $body = $this->request(self::URI_AUTH_USER_REVOKE, $params);
-
-        return $body;
+        return $this->request(self::URI_AUTH_USER_REVOKE, $params);
     }
 
     // endregion auth
 
     /**
      * 发送HTTP请求
-     *
-     * @param  string $uri
-     * @param  array  $params  请求参数
-     * @param  array  $options 可选参数
+     * @param string $uri
+     * @param array  $params  请求参数
+     * @param array  $options 可选参数
      * @return array
-     * @throws BadResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    protected function request($uri, array $params = [], array $options = [])
+    protected function request(string $uri, array $params = [], array $options = []): array
     {
         if ($options) {
             $params = array_merge($params, $options);
@@ -731,7 +678,7 @@ class Client
         }
 
         $response = $this->getHttpClient()->request('post', $uri, $data);
-        $content = $response->getBody()->getContents();
+        $content  = $response->getBody()->getContents();
 
         $body = json_decode($content, true);
         if ($this->pretty && isset($body['header'])) {
@@ -747,23 +694,20 @@ class Client
         if ($httpClient !== null) {
             return $httpClient;
         }
-        $baseUri = sprintf('%s/%s/', $this->server, $this->version);
+        $baseUri                       = sprintf('%s/%s/', $this->server, $this->version);
         $this->httpOptions['base_uri'] = $baseUri;
         if (!array_key_exists('timeout', $this->httpOptions)) {
             $this->httpOptions['timeout'] = self::DEFAULT_HTTP_TIMEOUT;
         }
-        $httpClient = new HttpClient($this->httpOptions);
-
-        return $httpClient;
+        return new HttpClient($this->httpOptions);
     }
 
     /**
      * string类型key用base64编码
-     *
      * @param array $data
      * @return array
      */
-    protected function encode(array $data)
+    protected function encode(array $data): array
     {
 
         foreach ($data as $key => $value) {
@@ -777,13 +721,12 @@ class Client
 
     /**
      * 指定字段base64解码
-     *
      * @param array  $body
      * @param string $bodyKey
-     * @param array  $fields  需要解码的字段
+     * @param array  $fields 需要解码的字段
      * @return array
      */
-    protected function decodeBodyForFields(array $body, $bodyKey, array $fields)
+    protected function decodeBodyForFields(array $body, string $bodyKey, array $fields): array
     {
         if (!isset($body[$bodyKey])) {
             return $body;
@@ -816,8 +759,8 @@ class Client
         }
 
         $map = [];
-        foreach ($data as $index => $value) {
-            $key = $value['key'];
+        foreach ($data as $value) {
+            $key       = $value['key'];
             $map[$key] = $value['value'];
         }
 

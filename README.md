@@ -1,5 +1,5 @@
 # etcd-php
-PHP client for Etcd v3
+PHP client for Etcd v3.5
 
 [![Build Status](https://travis-ci.org/ouqiang/etcd-php.png)](https://travis-ci.org/ouqiang/etcd-php)
 [![Latest Stable Version](https://poser.pugx.org/start-point/etcd-php/v/stable.png)](https://packagist.org/packages/start-point/etcd-php)
@@ -7,18 +7,18 @@ PHP client for Etcd v3
 [![License](https://poser.pugx.org/start-point/etcd-php/license.png)](https://packagist.org/packages/start-point/etcd-php)
 
 
-[documentation](https://github.com/ouqiang/etcd-php/wiki)
+[documentation](https://github.com/liangtao-top/etcd-php/wiki)
 
 Requirements
 ------------
-* PHP5.5+
+* PHP8.0+
 * Composer
 
 
 Installation
 ------------
 ```shell
-composer require start-point/etcd-php
+composer require liangtao/etcd-php
 ```
 
 Usage

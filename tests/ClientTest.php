@@ -1,13 +1,21 @@
 <?php
-/**
- * @author qiang.ou<qingqianludao@gmail.com>
- */
-
+// +----------------------------------------------------------------------
+// | CodeEngine
+// +----------------------------------------------------------------------
+// | Copyright 艾邦
+// +----------------------------------------------------------------------
+// | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
+// +----------------------------------------------------------------------
+// | Author: TaoGe <liangtao.gz@foxmail.com>
+// +----------------------------------------------------------------------
+// | Date: 2021/11/9 14:10
+// +----------------------------------------------------------------------
 namespace Etcd\Tests;
 
 use Etcd\Client;
+use PHPUnit\Framework\TestCase;
 
-class ClientTest extends \PHPUnit_Framework_TestCase
+class ClientTest extends TestCase
 {
     /**
      * @var \Etcd\Client;
@@ -20,7 +28,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     protected $user = 'root';
     protected $password = '123456';
 
-    public function setUp()
+    protected function setUp():void
     {
         $this->client = new Client();
         $this->client->setPretty(true);

@@ -58,7 +58,7 @@ class Client
     const PERMISSION_WRITE     = 1;
     const PERMISSION_READWRITE = 2;
 
-    const DEFAULT_HTTP_TIMEOUT = 30;
+    const DEFAULT_HTTP_TIMEOUT = 5;
 
     /**
      * @var string host:port

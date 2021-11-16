@@ -37,10 +37,6 @@
   },
   "repositories": [
     {
-      "type": "path",
-      "url": "../../com/php/core"
-    },
-    {
       "type": "composer",
       "url": "https://mirrors.aliyun.com/composer/"
     }
